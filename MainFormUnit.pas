@@ -21,7 +21,6 @@ type
     TrayIcon: TTrayIcon;
 
     procedure ChangeItemClick(Sender: TObject);
-    procedure ChangeMonitorItemClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure QuitItemClick(Sender: TObject);
@@ -164,7 +163,6 @@ begin
 
   if (wParam = WM_LBUTTONDOWN) then
   begin
-    // start calculating screen shot area
     SelectionForm.SelectionShape.Visible:=true;
 
     currTopLeftX := mouseClient.x;
@@ -172,10 +170,6 @@ begin
 
     SelectionForm.SelectionShape.Left:=mouseClient.x;
     SelectionForm.SelectionShape.Top:=mouseClient.y;
-    //showMessage(IntToStr(screenPoint.x) + '  ' + IntToStr(screenPoint.y));
-    //showMessage(IntToStr(clientPoint.x) + '  ' + IntToStr(clientPoint.y));
-    //ScreenToClient(Handle,
-    //showMessage(IntToStr(Mouse.CursorPos.x));
 
     selectingScreenShotArea := true;
   end
@@ -199,7 +193,6 @@ begin
     tempShapePoint.y:=SelectionForm.SelectionShape.Top;
 
     copyBitMapPointTopLeft := SelectionForm.ClientToScreen(tempShapePoint);
-    //showMessage(IntToStr(copyBitMapPointTopLeft.x));
     BitBlt(compatibleContext, 0, 0, screenWidth, screenHeight, screenContext, copyBitMapPointTopLeft.x, copyBitMapPointTopLeft.y, SRCCOPY);
 
     screenBitmap := SelectObject(compatibleContext, tempScreenBitmap);
@@ -278,8 +271,6 @@ begin
   takingScreenShot := false;
   selectingScreenShotArea := false;
   changingShortcutCombination := false;
-
-  //currScreen := Screen.Monitors[Screen.DesktopLeft];
 end;
 
 procedure TSelectionForm.ChangeItemClick(Sender: TObject);
@@ -289,11 +280,6 @@ begin
   TrayIcon.BalloonTitle:='Changing shortcut combination';
   TrayIcon.BalloonHint:='Perform any combination of keys and press Enter';
   TrayIcon.ShowBalloonHint;
-end;
-
-procedure TSelectionForm.ChangeMonitorItemClick(Sender: TObject);
-begin
-  // change screen
 end;
 
 procedure TSelectionForm.FormDestroy(Sender: TObject);
