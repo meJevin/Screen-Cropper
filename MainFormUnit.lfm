@@ -4,7 +4,7 @@ object SelectionForm: TSelectionForm
   Top = 0
   Width = 320
   AlphaBlend = True
-  AlphaBlendValue = 65
+  AlphaBlendValue = 90
   BorderStyle = bsNone
   Caption = 'SelectionForm'
   ClientHeight = 240
@@ -24,7 +24,6 @@ object SelectionForm: TSelectionForm
     Width = 0
     Pen.EndCap = pecSquare
     Pen.JoinStyle = pjsMiter
-    Pen.Width = 2
   end
   object TrayIcon: TTrayIcon
     BalloonTimeout = 25
