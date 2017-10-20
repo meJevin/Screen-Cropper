@@ -77,9 +77,22 @@ begin
 
   vKeyCode := KBInfoStruct^.vkCode;
 
-  if (vKeyCode = VK_F1) then
+  if (vKeyCode = VK_ESCAPE) then
   begin
-    Application.Terminate;
+    SelectionForm.SelectionShape.Visible:=false;
+    SelectionForm.Refresh;
+    SelectionForm.Repaint;
+    SelectionForm.Visible:=false;
+
+    selectingScreenShotArea := false;
+    takingScreenShot := false;
+
+    SelectionForm.SelectionShape.Width:=0;
+    SelectionForm.SelectionShape.Height:=0;
+
+    drawReg := CreateRectRgn(0,0,0,0);
+
+    SetWindowRgn(SelectionForm.Handle, drawReg, true);
   end;
 
   if ((changingShortcutCombination) and (vKeyCode = VK_RETURN)) then
