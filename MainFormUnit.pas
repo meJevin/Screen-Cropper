@@ -115,7 +115,7 @@ begin
   isCtrlDown := (isBitSet(GetKeyState(VK_CONTROL), 15));
   isAltDown := (isBitSet(GetKeyState(VK_MENU), 15));
 
-  if ((isCtrlDown) and (isAltDown) and (vKeyCode = keyNeeded)) then
+  if ((isCtrlDown) and (isAltDown) and (vKeyCode = keyNeeded)) and (not(selectingScreenShotArea)) then
   begin
     if ((SelectionForm.Left <> Screen.DesktopLeft) or (SelectionForm.Top <> Screen.DesktopTop)) then
     begin
