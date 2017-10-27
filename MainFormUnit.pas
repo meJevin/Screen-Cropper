@@ -297,24 +297,6 @@ begin
   selectingScreenShotArea := false;
   changingShortcutCombination := false;
 
-  if (RegOpenKeyEx(HKEY_CURRENT_USER, 'Software\Microsoft\Windows\CurrentVersion\Run', 0, KEY_READ, hCheckStartupKey) = ERROR_SUCCESS) then
-  begin
-    // startup enabled
-    if (RegQueryValueEx(hCheckStartupKey, 'ScreenCropper', nil, nil, nil, nil) = ERROR_FILE_NOT_FOUND) then
-    begin
-      // didn't find the startup value, it's not enabled then!!
-      LaunchOnStartup.Checked:=false;
-    end
-    else
-    begin
-      LaunchOnStartup.Checked:=true;
-    end;
-  end
-  else
-  begin
-    LaunchOnStartup.Checked:=false;
-  end;
-
   if (RegOpenKeyEx(HKEY_CURRENT_USER, 'Software\ScreenCropper', 0, KEY_READ, hCreatedFirstTimeRunKey) <> ERROR_SUCCESS) then
   begin
     // running for the first time!
@@ -347,6 +329,21 @@ begin
 
     RegCreateKey(HKEY_CURRENT_USER, 'Software\ScreenCropper', hFirstTimeRunKey);
   end;
+
+
+  if (RegOpenKeyEx(HKEY_CURRENT_USER, 'Software\Microsoft\Windows\CurrentVersion\Run', 0, KEY_READ, hCheckStartupKey) = ERROR_SUCCESS) then
+  begin
+    // startup enabled
+    if (RegQueryValueEx(hCheckStartupKey, 'ScreenCropper', nil, nil, nil, nil) = ERROR_FILE_NOT_FOUND) then
+    begin
+      // didn't find the startup value, it's not enabled then!!
+      LaunchOnStartup.Checked:=false;
+    end
+    else
+    begin
+      LaunchOnStartup.Checked:=true;
+    end;
+  end
 end;
 
 procedure TSelectionForm.ChangeItemClick(Sender: TObject);
