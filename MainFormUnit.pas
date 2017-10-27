@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, ExtCtrls,
-  Menus, jwawinuser, windows;
+  Menus, jwawinuser, windows, jwawinreg;
 
 type
 
@@ -15,6 +15,7 @@ type
   TSelectionForm = class(TForm)
     ChangeItem: TMenuItem;
     ChangeMonitorItem: TMenuItem;
+    LaunchOnStartup: TMenuItem;
     QuitItem: TMenuItem;
     SelectionShape: TShape;
     TrayPopup: TPopupMenu;
@@ -23,6 +24,7 @@ type
     procedure ChangeItemClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
+    procedure LaunchOnStartupClick(Sender: TObject);
     procedure QuitItemClick(Sender: TObject);
   private
     { private declarations }
@@ -267,6 +269,16 @@ end;
 procedure TSelectionForm.FormCreate(Sender: TObject);
 var
   drawReg: HRGN;
+  exePath: string;
+
+  messageBoxReturn: longInt;
+
+  hStartupKey: HKEY;
+  hOldStartupKey: HKEY;
+  hCheckStartupKey: HKEY;
+
+  hFirstTimeRunKey: HKEY;
+  hCreatedFirstTimeRunKey: HKEY;
 begin
   drawReg := CreateRectRgn(0,0,0,0);
 
@@ -284,6 +296,57 @@ begin
   takingScreenShot := false;
   selectingScreenShotArea := false;
   changingShortcutCombination := false;
+
+  if (RegOpenKeyEx(HKEY_CURRENT_USER, 'Software\Microsoft\Windows\CurrentVersion\Run', 0, KEY_READ, hCheckStartupKey) = ERROR_SUCCESS) then
+  begin
+    // startup enabled
+    if (RegQueryValueEx(hCheckStartupKey, 'ScreenCropper', nil, nil, nil, nil) = ERROR_FILE_NOT_FOUND) then
+    begin
+      // didn't find the startup value, it's not enabled then!!
+      LaunchOnStartup.Checked:=false;
+    end
+    else
+    begin
+      LaunchOnStartup.Checked:=true;
+    end;
+  end
+  else
+  begin
+    LaunchOnStartup.Checked:=false;
+  end;
+
+  if (RegOpenKeyEx(HKEY_CURRENT_USER, 'Software\ScreenCropper', 0, KEY_READ, hCreatedFirstTimeRunKey) <> ERROR_SUCCESS) then
+  begin
+    // running for the first time!
+
+    // let's see if we already have a screated registry file for stratup
+    if (RegOpenKeyEx(HKEY_CURRENT_USER, 'Software\Microsoft\Windows\CurrentVersion\Run', 0, KEY_READ, hOldStartupKey) = ERROR_SUCCESS) then
+    begin
+      if (RegQueryValueEx(hOldStartupKey, 'ScreenCropper', nil, nil, nil, nil) = ERROR_FILE_NOT_FOUND) then
+      begin
+        // can't open startup registry for our exe, should we create it?
+        messageBoxReturn := MessageBox(0, 'Do you want Screen Cropper to be run on Windows startup?', 'Screen Cropper', MB_YESNO or MB_ICONINFORMATION);
+
+        exePath := Application.ExeName;
+        if (messageBoxReturn = IDYES) then
+        begin
+          // add key to autorun reg
+          if (RegCreateKey(HKEY_CURRENT_USER, 'Software\Microsoft\Windows\CurrentVersion\Run', hStartupKey) <> ERROR_SUCCESS) then
+          begin
+            // could not create reg key..
+            MessageBox(0, 'Could not create registry key for Screen Cropper!', 'Screen Cropper', MB_OK or MB_ICONINFORMATION)
+          end
+          else
+          begin
+            RegSetValueEx(hStartupKey, 'ScreenCropper', 0, REG_SZ, LPBYTE(exePath), (Length(exePath)+1)*2);
+          end;
+        end;
+
+      end;
+    end;
+
+    RegCreateKey(HKEY_CURRENT_USER, 'Software\ScreenCropper', hFirstTimeRunKey);
+  end;
 end;
 
 procedure TSelectionForm.ChangeItemClick(Sender: TObject);
@@ -299,6 +362,38 @@ procedure TSelectionForm.FormDestroy(Sender: TObject);
 begin
   UnhookWindowsHookEx(kbdHook);
   UnhookWindowsHookEx(mouseHook);
+end;
+
+procedure TSelectionForm.LaunchOnStartupClick(Sender: TObject);
+var
+  startupKey: HKEY;
+  newStartupKey: HKEY;
+
+  exePath: string;
+begin
+  exePath := Application.ExeName;
+
+  RegOpenKeyEx(HKEY_CURRENT_USER, 'Software\Microsoft\Windows\CurrentVersion\Run', 0, KEY_READ or KEY_WRITE, startupKey);
+  if (LaunchOnStartup.Checked) then
+  begin
+    // remove ScreenCropper value from Software\Microsoft\Windows\CurrentVersion\Run
+    RegDeleteValue(startupKey, 'ScreenCropper');
+  end
+  else
+  begin
+    // else add it
+    if (RegCreateKey(HKEY_CURRENT_USER, 'Software\Microsoft\Windows\CurrentVersion\Run', newStartupKey) <> ERROR_SUCCESS) then
+    begin
+      // could not create reg key..
+      MessageBox(0, 'Could not create registry key for Screen Cropper!', 'Screen Cropper', MB_OK or MB_ICONINFORMATION)
+    end
+    else
+    begin
+      RegSetValueEx(newStartupKey, 'ScreenCropper', 0, REG_SZ, LPBYTE(exePath), (Length(exePath)+1)*2);
+    end;
+  end;
+
+  LaunchOnStartup.Checked:=not(LaunchOnStartup.Checked);
 end;
 
 procedure TSelectionForm.QuitItemClick(Sender: TObject);

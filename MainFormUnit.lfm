@@ -1776,6 +1776,11 @@ object SelectionForm: TSelectionForm
   object TrayPopup: TPopupMenu
     left = 120
     top = 8
+    object LaunchOnStartup: TMenuItem
+      Caption = 'Launch on startup'
+      RadioItem = True
+      OnClick = LaunchOnStartupClick
+    end
     object ChangeItem: TMenuItem
       Caption = 'Change shortcut'
       OnClick = ChangeItemClick
