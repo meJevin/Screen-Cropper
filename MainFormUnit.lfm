@@ -1781,10 +1781,6 @@ object SelectionForm: TSelectionForm
       RadioItem = True
       OnClick = LaunchOnStartupClick
     end
-    object ChangeItem: TMenuItem
-      Caption = 'Change shortcut'
-      OnClick = ChangeItemClick
-    end
     object QuitItem: TMenuItem
       Caption = 'Quit'
       OnClick = QuitItemClick

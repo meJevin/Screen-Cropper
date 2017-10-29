@@ -13,7 +13,6 @@ type
   { TSelectionForm }
 
   TSelectionForm = class(TForm)
-    ChangeItem: TMenuItem;
     ChangeMonitorItem: TMenuItem;
     LaunchOnStartup: TMenuItem;
     QuitItem: TMenuItem;
@@ -21,7 +20,6 @@ type
     TrayPopup: TPopupMenu;
     TrayIcon: TTrayIcon;
 
-    procedure ChangeItemClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure LaunchOnStartupClick(Sender: TObject);
@@ -35,14 +33,11 @@ type
 var
   SelectionForm: TSelectionForm;
 
-  keyNeeded: DWORD;
-
   kbdHook: HHOOK;
   mouseHook: HHOOK;
 
   takingScreenShot: boolean;
   selectingScreenShotArea: boolean;
-  changingShortcutCombination: boolean;
 
   currTopLeftX, currTopLeftY: longInt;
 
@@ -97,27 +92,10 @@ begin
     SetWindowRgn(SelectionForm.Handle, drawReg, true);
   end;
 
-  if ((changingShortcutCombination) and (vKeyCode = VK_RETURN)) then
-  begin
-    changingShortcutCombination := false;
-    SelectionForm.TrayIcon.BalloonTitle:='Changing shortcut combination';
-    SelectionForm.TrayIcon.BalloonHint:='Shortcut was succesfuly changed';
-    SelectionForm.TrayIcon.ShowBalloonHint;
-    result := CallNextHookEx(0, nCode, wParam, lParam);
-    exit;
-  end;
-
-  if (changingShortcutCombination) then
-  begin
-    keyNeeded := vKeyCode;
-    result := CallNextHookEx(0, nCode, wParam, lParam);
-    exit;
-  end;
-
   isCtrlDown := (isBitSet(GetKeyState(VK_CONTROL), 15));
   isAltDown := (isBitSet(GetKeyState(VK_MENU), 15));
 
-  if ((isCtrlDown) and (isAltDown) and (vKeyCode = keyNeeded)) and (not(selectingScreenShotArea)) then
+  if ((isCtrlDown) and (isAltDown) and (vKeyCode = VK_C)) and (not(selectingScreenShotArea)) then
   begin
     if ((SelectionForm.Left <> Screen.DesktopLeft) or (SelectionForm.Top <> Screen.DesktopTop)) then
     begin
@@ -288,14 +266,11 @@ begin
   Canvas.Brush.Style:=bsSolid;
   Canvas.Pen.Style:=psClear;
 
-  keyNeeded := VK_C;
-
   kbdHook := SetWindowsHookEx(WH_KEYBOARD_LL, @kbdHookProc, HInstance, 0);
   mouseHook := SetWindowsHookEx(WH_MOUSE_LL, @mouseHookProc, HInstance, 0);
 
   takingScreenShot := false;
   selectingScreenShotArea := false;
-  changingShortcutCombination := false;
 
   if (RegOpenKeyEx(HKEY_CURRENT_USER, 'Software\ScreenCropper', 0, KEY_READ, hCreatedFirstTimeRunKey) <> ERROR_SUCCESS) then
   begin
@@ -344,15 +319,6 @@ begin
       LaunchOnStartup.Checked:=true;
     end;
   end
-end;
-
-procedure TSelectionForm.ChangeItemClick(Sender: TObject);
-begin
-  changingShortcutCombination := true;
-
-  TrayIcon.BalloonTitle:='Changing shortcut combination';
-  TrayIcon.BalloonHint:='Perform any combination of keys and press Enter';
-  TrayIcon.ShowBalloonHint;
 end;
 
 procedure TSelectionForm.FormDestroy(Sender: TObject);
