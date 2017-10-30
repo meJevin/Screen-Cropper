@@ -1781,6 +1781,14 @@ object SelectionForm: TSelectionForm
       RadioItem = True
       OnClick = LaunchOnStartupClick
     end
+    object ChangeCombItem: TMenuItem
+      Caption = 'Change combination'
+      OnClick = ChangeCombItemClick
+    end
+    object ShowCombItem: TMenuItem
+      Caption = 'Show combination'
+      OnClick = ShowCombItemClick
+    end
     object QuitItem: TMenuItem
       Caption = 'Quit'
       OnClick = QuitItemClick

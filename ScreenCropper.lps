@@ -4,13 +4,13 @@
     <PathDelim Value="\"/>
     <Version Value="9"/>
     <BuildModes Active="Default"/>
-    <Units Count="7">
+    <Units Count="6">
       <Unit0>
         <Filename Value="ScreenCropper.lpr"/>
         <IsPartOfProject Value="True"/>
         <EditorIndex Value="1"/>
         <CursorPos Y="33"/>
-        <UsageCount Value="85"/>
+        <UsageCount Value="159"/>
         <Loaded Value="True"/>
       </Unit0>
       <Unit1>
@@ -20,166 +20,176 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <IsVisibleTab Value="True"/>
-        <TopLine Value="328"/>
-        <CursorPos X="12" Y="323"/>
-        <UsageCount Value="85"/>
+        <TopLine Value="83"/>
+        <CursorPos Y="117"/>
+        <UsageCount Value="159"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
       </Unit1>
       <Unit2>
         <Filename Value="FuccBoi.lpr"/>
-        <UsageCount Value="19"/>
+        <UsageCount Value="12"/>
       </Unit2>
       <Unit3>
-        <Filename Value="G:\Lazarus\fpc\3.0.0\source\packages\winunits-jedi\src\jwawinuser.pas"/>
-        <EditorIndex Value="-1"/>
-        <TopLine Value="17818"/>
-        <UsageCount Value="4"/>
-      </Unit3>
-      <Unit4>
         <Filename Value="G:\Lazarus\lcl\graphics.pp"/>
         <UnitName Value="Graphics"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="749"/>
         <CursorPos X="27" Y="780"/>
-        <UsageCount Value="9"/>
-      </Unit4>
-      <Unit5>
+        <UsageCount Value="2"/>
+      </Unit3>
+      <Unit4>
         <Filename Value="G:\Lazarus\lcl\include\control.inc"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="3934"/>
         <CursorPos Y="3960"/>
-        <UsageCount Value="9"/>
-      </Unit5>
-      <Unit6>
+        <UsageCount Value="2"/>
+      </Unit4>
+      <Unit5>
         <Filename Value="G:\Lazarus\lcl\include\customform.inc"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="909"/>
         <CursorPos Y="928"/>
-        <UsageCount Value="9"/>
-      </Unit6>
+        <UsageCount Value="2"/>
+      </Unit5>
     </Units>
     <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
         <Filename Value="MainFormUnit.pas"/>
-        <Caret Line="230" TopLine="199"/>
+        <Caret Line="174" Column="28" TopLine="167"/>
       </Position1>
       <Position2>
         <Filename Value="MainFormUnit.pas"/>
-        <Caret Line="217" Column="95" TopLine="199"/>
+        <Caret Line="200" TopLine="167"/>
       </Position2>
       <Position3>
         <Filename Value="MainFormUnit.pas"/>
-        <Caret Line="218" Column="95" TopLine="200"/>
+        <Caret Line="202" TopLine="167"/>
       </Position3>
       <Position4>
         <Filename Value="MainFormUnit.pas"/>
-        <Caret Line="217" Column="95" TopLine="199"/>
+        <Caret Line="198" TopLine="170"/>
       </Position4>
       <Position5>
         <Filename Value="MainFormUnit.pas"/>
-        <Caret Line="213" Column="32" TopLine="198"/>
+        <Caret Line="199" Column="54" TopLine="170"/>
       </Position5>
       <Position6>
         <Filename Value="MainFormUnit.pas"/>
-        <Caret Line="215" Column="36" TopLine="197"/>
+        <Caret Line="202" TopLine="170"/>
       </Position6>
       <Position7>
         <Filename Value="MainFormUnit.pas"/>
-        <Caret Line="196" Column="33" TopLine="167"/>
+        <Caret Line="193" Column="100" TopLine="170"/>
       </Position7>
       <Position8>
         <Filename Value="MainFormUnit.pas"/>
-        <Caret Line="125" Column="17" TopLine="125"/>
+        <Caret Line="214" Column="41" TopLine="181"/>
       </Position8>
       <Position9>
-        <Filename Value="ScreenCropper.lpr"/>
-        <Caret Line="6" Column="18"/>
+        <Filename Value="MainFormUnit.pas"/>
+        <Caret Line="201" Column="11" TopLine="181"/>
       </Position9>
       <Position10>
         <Filename Value="MainFormUnit.pas"/>
-        <Caret Line="157" Column="65" TopLine="146"/>
+        <Caret Line="203" TopLine="181"/>
       </Position10>
       <Position11>
         <Filename Value="MainFormUnit.pas"/>
-        <Caret Line="77" Column="15" TopLine="49"/>
+        <Caret Line="204" Column="34" TopLine="176"/>
       </Position11>
       <Position12>
         <Filename Value="MainFormUnit.pas"/>
-        <Caret Line="119" Column="120"/>
+        <Caret Line="202" Column="11" TopLine="176"/>
       </Position12>
       <Position13>
         <Filename Value="MainFormUnit.pas"/>
-        <Caret Line="315" Column="7" TopLine="286"/>
+        <Caret Line="204" TopLine="176"/>
       </Position13>
       <Position14>
         <Filename Value="MainFormUnit.pas"/>
-        <Caret Line="297" Column="70" TopLine="277"/>
+        <Caret Line="205" TopLine="176"/>
       </Position14>
       <Position15>
         <Filename Value="MainFormUnit.pas"/>
-        <Caret Line="324" Column="13" TopLine="295"/>
+        <Caret Line="184" TopLine="176"/>
       </Position15>
       <Position16>
         <Filename Value="MainFormUnit.pas"/>
-        <Caret Line="328" Column="9" TopLine="296"/>
+        <Caret Line="225" TopLine="202"/>
       </Position16>
       <Position17>
         <Filename Value="MainFormUnit.pas"/>
-        <Caret Line="9" Column="40"/>
+        <Caret Line="194" Column="113" TopLine="168"/>
       </Position17>
       <Position18>
         <Filename Value="MainFormUnit.pas"/>
-        <Caret Line="360" Column="58" TopLine="345"/>
+        <Caret Line="224" Column="28" TopLine="202"/>
       </Position18>
       <Position19>
         <Filename Value="MainFormUnit.pas"/>
-        <Caret Line="38" Column="20" TopLine="136"/>
+        <Caret Line="226" Column="28" TopLine="204"/>
       </Position19>
       <Position20>
         <Filename Value="MainFormUnit.pas"/>
-        <Caret Line="135" Column="21" TopLine="115"/>
+        <Caret Line="394" Column="92" TopLine="375"/>
       </Position20>
       <Position21>
         <Filename Value="MainFormUnit.pas"/>
-        <Caret Line="120" Column="7" TopLine="100"/>
+        <Caret Line="549" Column="28" TopLine="524"/>
       </Position21>
       <Position22>
-        <Filename Value="ScreenCropper.lpr"/>
-        <Caret Line="19" Column="14"/>
+        <Filename Value="MainFormUnit.pas"/>
+        <Caret Line="202" TopLine="185"/>
       </Position22>
       <Position23>
         <Filename Value="MainFormUnit.pas"/>
-        <Caret Line="127" Column="48" TopLine="104"/>
+        <Caret Line="204" Column="63" TopLine="185"/>
       </Position23>
       <Position24>
         <Filename Value="MainFormUnit.pas"/>
-        <Caret Line="123" Column="21" TopLine="103"/>
+        <Caret Line="197" TopLine="185"/>
       </Position24>
       <Position25>
         <Filename Value="MainFormUnit.pas"/>
-        <Caret Line="127" Column="3" TopLine="106"/>
+        <Caret Line="198" Column="51" TopLine="185"/>
       </Position25>
       <Position26>
         <Filename Value="MainFormUnit.pas"/>
-        <Caret Line="123" Column="51" TopLine="103"/>
+        <Caret Line="193" Column="69" TopLine="176"/>
       </Position26>
       <Position27>
         <Filename Value="MainFormUnit.pas"/>
-        <Caret Line="120" Column="56" TopLine="87"/>
+        <Caret Line="194" TopLine="170"/>
       </Position27>
       <Position28>
         <Filename Value="MainFormUnit.pas"/>
-        <Caret Line="119" Column="56" TopLine="86"/>
+        <Caret Line="117" TopLine="98"/>
       </Position28>
       <Position29>
         <Filename Value="MainFormUnit.pas"/>
-        <Caret Line="35" Column="37" TopLine="13"/>
+        <Caret Line="106" Column="8" TopLine="97"/>
       </Position29>
       <Position30>
         <Filename Value="MainFormUnit.pas"/>
-        <Caret Line="22" Column="52"/>
+        <Caret Line="107" Column="2" TopLine="97"/>
       </Position30>
     </JumpHistory>
   </ProjectSession>
+  <Debugging>
+    <Watches Count="4">
+      <Item1>
+        <Expression Value="tempVKChar"/>
+      </Item1>
+      <Item2>
+        <Expression Value="newCombinationString"/>
+      </Item2>
+      <Item3>
+        <Expression Value="tempVKCharLength"/>
+      </Item3>
+      <Item4>
+        <Expression Value="hotkeyCombination[i]"/>
+      </Item4>
+    </Watches>
+  </Debugging>
 </CONFIG>

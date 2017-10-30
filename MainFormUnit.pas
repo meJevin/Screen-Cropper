@@ -15,15 +15,19 @@ type
   TSelectionForm = class(TForm)
     ChangeMonitorItem: TMenuItem;
     LaunchOnStartup: TMenuItem;
+    ChangeCombItem: TMenuItem;
+    ShowCombItem: TMenuItem;
     QuitItem: TMenuItem;
     SelectionShape: TShape;
     TrayPopup: TPopupMenu;
     TrayIcon: TTrayIcon;
 
+    procedure ChangeCombItemClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure LaunchOnStartupClick(Sender: TObject);
     procedure QuitItemClick(Sender: TObject);
+    procedure ShowCombItemClick(Sender: TObject);
   private
     { private declarations }
   public
@@ -43,15 +47,43 @@ var
 
   currMonitor: ^TMonitor;
 
+  hotkeyCombination: array of DWORD;
+  changingCombination: boolean;
+
+  currCombinationString: string;
+
 implementation
 
 {$R *.lfm}
 
 { TSelectionForm }
 
+function getAppropriateStringForVirtualKey(vKeyCode: longInt): string; forward;
+
+function Find(const ValueToFind: DWORD; var arr: array of DWORD): longInt;
+var
+  i: longInt;
+begin
+  for i:=0 to Length(arr)-1 do
+  begin
+    if (arr[i] = ValueToFind) then
+    begin
+      result := i;
+      exit;
+    end;
+  end;
+
+  result := -1;
+end;
+
 function isBitSet(const AValueToCheck, ABitIndex: LongInt): Boolean;
 begin
   Result := AValueToCheck and (1 shl ABitIndex) <> 0;
+end;
+
+function KeyIsDown(vkCode: DWORD): boolean;
+begin
+  exit(isBitSet(GetKeyState(vkCode), 15));
 end;
 
 function kbdHookProc(nCode: longInt; wParam: WPARAM; lParam: LPARAM): LRESULT; stdcall;
@@ -59,12 +91,18 @@ var
   KBInfoStruct: ^KBDLLHOOKSTRUCT;
   vKeyCode: LONG;
 
-  isCtrlDown: boolean;
-  isAltDown: boolean;
-
   drawReg: HRGN;
+
+  i: longInt;
+  takeScreenShot: boolean;
+
+  tempKeyCode: DWORD;
+
+  newCombinationString: string;
+  tempKeyString: string;
+  tempVKChar: char;
 begin
-  if (nCode < 0) or ((wParam <> WM_KEYDOWN) and (wParam <> WM_SYSKEYDOWN)) then
+  if (nCode < 0) or ((wParam <> WM_KEYDOWN) and (wParam <> WM_SYSKEYDOWN)) and (not(changingCombination and ((wParam = WM_KEYUP) or (wParam = WM_SYSKEYUP)))) then // only presses, but releases too only when comnination is being changed
   begin
     result := CallNextHookEx(0, nCode, wParam, lParam);
     exit;
@@ -73,6 +111,35 @@ begin
   KBInfoStruct := PKBDLLHOOKSTRUCT(lParam);
 
   vKeyCode := KBInfoStruct^.vkCode;
+
+  if ((wParam = WM_KEYUP) or (wParam = WM_SYSKEYUP)) then // we're changing combination and releasing a key
+  begin
+    for i:=0 to Length(hotkeyCombination)-1 do
+    begin
+      // if the key being released is in our combination array, remove it from there
+
+      // because the order doesn't really matter, we can just swap it with the last one and decrease the length of array by 1
+      if (hotkeyCombination[i] = vKeyCode) then
+      begin
+        if (i = Length(hotkeyCombination)-1) then // last one, just decrease the length
+        begin
+          SetLength(hotkeyCombination, Length(hotkeyCombination)-1);
+          break;
+        end;
+
+        // swap with last and delete last
+        tempKeyCode := hotkeyCombination[i];
+        hotkeyCombination[i] := hotkeyCombination[Length(hotkeyCombination)-1];
+        hotkeyCombination[Length(hotkeyCombination)-1] := tempKeyCode;
+
+        SetLength(hotkeyCombination, Length(hotkeyCombination)-1);
+        break;
+      end;
+    end;
+
+    result := CallNextHookEx(0, nCode, wParam, lParam);
+    exit;
+  end;
 
   if (vKeyCode = VK_ESCAPE) then
   begin
@@ -92,10 +159,84 @@ begin
     SetWindowRgn(SelectionForm.Handle, drawReg, true);
   end;
 
-  isCtrlDown := (isBitSet(GetKeyState(VK_CONTROL), 15));
-  isAltDown := (isBitSet(GetKeyState(VK_MENU), 15));
+  if (changingCombination) then
+  begin
+    // add the key pressed if it's not already in the combination
+    if (vKeyCode <> VK_ESCAPE) and (vKeyCode <> VK_RETURN) and (Find(vKeyCode, hotkeyCombination) = -1) then
+    begin
+      SetLength(hotkeyCombination, Length(hotkeyCombination)+1);
+      hotkeyCombination[Length(hotkeyCombination)-1] := vKeyCode;
+    end;
 
-  if ((isCtrlDown) and (isAltDown) and (vKeyCode = VK_C)) and (not(selectingScreenShotArea)) then
+    if (vKeyCode = VK_RETURN) and (Length(hotkeyCombination) > 0) then // accept new key combination
+    begin
+      newCombinationString := '';
+      changingCombination := false;
+
+      // and show it
+
+      for i:=0 to Length(hotkeyCombination)-1 do
+      begin
+        tempKeyString := getAppropriateStringForVirtualKey(hotkeyCombination[i]); // if the key is not syskey, returns 'N/A'
+        if (tempKeyString = 'N/A') then
+        begin
+          // translate vk to char
+
+          tempVKChar := char(MapVirtualKey(hotkeyCombination[i], 2));
+
+          //showMessage(arrayToString(tempVKChar));
+          if (newCombinationString = '') then
+          begin
+            newCombinationString := tempVKChar;
+          end
+          else
+          begin
+            newCombinationString := newCombinationString + '-' + UpperCase(tempVKChar);
+          end;
+        end
+        else
+        begin
+          if (newCombinationString = '') then
+          begin
+            newCombinationString := tempKeyString;
+          end
+          else
+          begin
+            newCombinationString := newCombinationString + '-' + UpperCase(tempKeyString);
+          end;
+        end;
+      end;
+
+      currCombinationString := newCombinationString;
+
+      SelectionForm.TrayIcon.BalloonTitle:='You new combination';
+      SelectionForm.TrayIcon.BalloonHint:=newCombinationString;
+      SelectionForm.TrayIcon.ShowBalloonHint;
+
+      result := CallNextHookEx(0, nCode, wParam, lParam);
+      exit;
+    end;
+
+    result := CallNextHookEx(0, nCode, wParam, lParam);
+    exit;
+  end;
+
+
+  takeScreenShot := true;
+  for i:=0 to Length(hotkeyCombination)-1 do
+  begin
+    if (hotkeyCombination[i] = vKeyCode) then
+    begin
+      continue;
+    end;
+    if not(KeyIsDown(hotkeyCombination[i])) then
+    begin
+      takeScreenShot := false;
+      break;
+    end;
+  end;
+
+  if (takeScreenShot) and (not(selectingScreenShotArea)) then
   begin
     if ((SelectionForm.Left <> Screen.DesktopLeft) or (SelectionForm.Top <> Screen.DesktopTop)) then
     begin
@@ -258,6 +399,16 @@ var
   hFirstTimeRunKey: HKEY;
   hCreatedFirstTimeRunKey: HKEY;
 begin
+  SetLength(hotkeyCombination, 3);
+
+  hotkeyCombination[0] := VK_CONTROL;
+  hotkeyCombination[1] := VK_MENU;
+  hotkeyCombination[2] := VK_C;
+
+  currCombinationString := 'CTRL-ALT-C';
+
+  changingCombination := false;
+
   drawReg := CreateRectRgn(0,0,0,0);
 
   SetWindowRgn(Handle, drawReg, true);
@@ -321,6 +472,17 @@ begin
   end
 end;
 
+procedure TSelectionForm.ChangeCombItemClick(Sender: TObject);
+begin
+  SetLength(hotkeyCombination, 0);
+  changingCombination := true;
+
+  TrayIcon.BalloonTitle:='Changing combination';
+  TrayIcon.BalloonHint:='You are currently changing the combination that activates Screen Cropper. Push on the desired keys and, while holding them down, push Enter';
+
+  TrayIcon.ShowBalloonHint;
+end;
+
 procedure TSelectionForm.FormDestroy(Sender: TObject);
 begin
   UnhookWindowsHookEx(kbdHook);
@@ -362,6 +524,146 @@ end;
 procedure TSelectionForm.QuitItemClick(Sender: TObject);
 begin
   Application.Terminate;
+end;
+
+procedure TSelectionForm.ShowCombItemClick(Sender: TObject);
+begin
+  TrayIcon.BalloonTitle:='Your combination';
+  TrayIcon.BalloonHint:=currCombinationString;
+  TrayIcon.ShowBalloonHint;
+end;
+
+function getAppropriateStringForVirtualKey(vKeyCode: longInt): string;
+var
+  fKeyNum: longInt;
+begin
+  if (vKeyCode = VK_TAB) then
+  begin
+    exit('TAB');
+  end
+  else if (vKeyCode = VK_CAPITAL) then
+  begin
+    exit('CAPS');
+  end
+  else if (vKeyCode = VK_LSHIFT) then
+  begin
+    exit('SHIFT');
+  end
+  else if (vKeyCode = VK_RSHIFT) then
+  begin
+    exit('SHIFT');
+  end
+  else if (vKeyCode = VK_LCONTROL) then
+  begin
+    exit('CTRL');
+  end
+  else if (vKeyCode = VK_RCONTROL) then
+  begin
+    exit('CTRL');
+  end
+  else if (vKeyCode = VK_LWIN) then
+  begin
+    exit('WIN');
+  end
+  else if (vKeyCode = VK_RWIN) then
+  begin
+    exit('WIN');
+  end
+  else if (vKeyCode = VK_LMENU) then
+  begin
+    exit('ALT');
+  end
+  else if (vKeyCode = VK_RMENU) then
+  begin
+    exit('ALT');
+  end
+  else if (vKeyCode in [32..47]) then
+  begin
+    if (vKeyCode = 32) then
+    begin
+      exit('SPACEBAR');
+    end
+    else if (vKeyCode = 33) then
+    begin
+      exit('PG UP');
+    end
+    else if (vKeyCode = 34) then
+    begin
+      exit('PG DOWN');
+    end
+    else if (vKeyCode = 35) then
+    begin
+      exit('END');
+    end
+    else if (vKeyCode = 36) then
+    begin
+      exit('HOME');
+    end
+    else if (vKeyCode = 37) then
+    begin
+      exit('LEFT ARROW');
+    end
+    else if (vKeyCode = 38) then
+    begin
+      exit('UP ARROW');
+    end
+    else if (vKeyCode = 39) then
+    begin
+      exit('RIGHT ARROW');
+    end
+    else if (vKeyCode = 40) then
+    begin
+      exit('DOWN ARROW');
+    end
+    else if (vKeyCode = 41) then
+    begin
+      exit('SELECT');
+    end
+    else if (vKeyCode = 42) then
+    begin
+      exit('PREINT');
+    end
+    else if (vKeyCode = 43) then
+    begin
+      exit('EXECUTE');
+    end
+    else if (vKeyCode = 44) then
+    begin
+      exit('PRINT SCREEN');
+    end
+    else if (vKeyCode = 45) then
+    begin
+      exit('INS');
+    end
+    else if (vKeyCode = 46) then
+    begin
+      exit('DEL');
+    end
+    else if (vKeyCode = 47) then
+    begin
+      exit('HELP');
+    end;
+  end
+  else if (vKeyCode in [112..135]) then  // F1-F24
+  begin
+    fKeyNum := vKeyCode - 111;
+    exit('F'+IntToStr(fKeyNum));
+  end
+  else if (vKeyCode in [144..145]) then
+  begin
+    if (vKeyCode = 144) then
+    begin
+      exit('NUM LOCK');
+    end
+    else if (vKeyCode = 145) then
+    begin
+      exit('SCROLL LOCK');
+    end;
+  end
+  else
+  begin
+    exit('N/A');
+  end;
 end;
 
 end.
