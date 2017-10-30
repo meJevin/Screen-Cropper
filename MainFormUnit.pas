@@ -86,6 +86,77 @@ begin
   exit(isBitSet(GetKeyState(vkCode), 15));
 end;
 
+function ArrayToString(const a: array of Char): string;
+begin
+  if Length(a)>0 then
+    SetString(Result, PChar(@a[0]), Length(a))
+  else
+    Result := '';
+end;
+
+procedure Split(Delimiter: Char; Str: string; ListOfStrings: TStrings) ;
+begin
+   ListOfStrings.Clear;
+   ListOfStrings.Delimiter       := Delimiter;
+   ListOfStrings.StrictDelimiter := True; // Requires D2006 or newer.
+   ListOfStrings.DelimitedText   := Str;
+end;
+
+procedure loadCombinationFromString(combinationStr: string);
+var
+  combinationVKCodesString: TStringList;
+
+  i: longInt;
+
+  tempKeyString: string;
+  newCombinationString: string;
+  tempVKChar: char;
+begin
+  combinationVKCodesString := TStringList.Create;
+
+  Split(',', combinationStr, combinationVKCodesString);
+
+  SetLength(hotkeyCombination, combinationVKCodesString.Count);
+  //showMessage(IntTOStr(combinationVKCodesString.Count));
+  for i:=0 to combinationVKCodesString.Count-1 do
+  begin
+    hotkeyCombination[i] := StrToInt(combinationVKCodesString.Strings[i]);
+  end;
+  // combinationStr is a comma separated values of vkCodes for the combination
+
+  for i:=0 to Length(hotkeyCombination)-1 do
+  begin
+    tempKeyString := getAppropriateStringForVirtualKey(hotkeyCombination[i]); // if the key is not syskey, returns 'N/A'
+    if (tempKeyString = 'N/A') then
+    begin
+      // translate vk to char
+      tempVKChar := char(MapVirtualKey(hotkeyCombination[i], 2));
+            //showMessage(arrayToString(tempVKChar));
+      if (newCombinationString = '') then
+      begin
+        newCombinationString := tempVKChar;
+      end
+      else
+      begin
+        newCombinationString := newCombinationString + '-' + UpperCase(tempVKChar);
+      end;
+    end
+    else
+    begin
+      if (newCombinationString = '') then
+      begin
+        newCombinationString := tempKeyString;
+      end
+      else
+      begin
+        newCombinationString := newCombinationString + '-' + UpperCase(tempKeyString);
+      end;
+    end;
+  end;
+
+  currCombinationString := newCombinationString;
+end;
+
 function kbdHookProc(nCode: longInt; wParam: WPARAM; lParam: LPARAM): LRESULT; stdcall;
 var
   KBInfoStruct: ^KBDLLHOOKSTRUCT;
@@ -101,6 +172,10 @@ var
   newCombinationString: string;
   tempKeyString: string;
   tempVKChar: char;
+
+  hFirstTimeRunKey: HKEY;
+
+  currCombinationVkCodeString: string;
 begin
   if (nCode < 0) or ((wParam <> WM_KEYDOWN) and (wParam <> WM_SYSKEYDOWN)) and (not(changingCombination and ((wParam = WM_KEYUP) or (wParam = WM_SYSKEYUP)))) then // only presses, but releases too only when comnination is being changed
   begin
@@ -111,6 +186,20 @@ begin
   KBInfoStruct := PKBDLLHOOKSTRUCT(lParam);
 
   vKeyCode := KBInfoStruct^.vkCode;
+
+  // we don't want to differtiate between left and right versions of ctrl, alt, shift, so translate their codes into normal ones
+  if (vKeyCode = VK_LMENU) or (vKeyCode = VK_RMENU) then
+  begin
+    vKeyCode := VK_MENU;
+  end
+  else if (vKeyCode = VK_LCONTROL) or (vKeyCode = VK_RCONTROL) then
+  begin
+    vKeyCode := VK_CONTROL;
+  end
+  else if (vKeyCode = VK_LSHIFT) or (vKeyCode = VK_RSHIFT) then
+  begin
+    vKeyCode := VK_SHIFT;
+  end;
 
   if ((wParam = WM_KEYUP) or (wParam = WM_SYSKEYUP)) then // we're changing combination and releasing a key
   begin
@@ -212,6 +301,20 @@ begin
       SelectionForm.TrayIcon.BalloonTitle:='You new combination';
       SelectionForm.TrayIcon.BalloonHint:=newCombinationString;
       SelectionForm.TrayIcon.ShowBalloonHint;
+
+      for i:=0 to Length(hotKeyCombination)-1 do
+      begin
+        if (currCombinationVkCodeString = '') then
+        begin
+          currCombinationVkCodeString := currCombinationVkCodeString + IntToStr(hotkeyCombination[i]);
+        end
+        else
+        begin
+          currCombinationVkCodeString := currCombinationVkCodeString + ', ' + IntToStr(hotkeyCombination[i]);
+        end;
+      end;
+      RegOpenKeyEx(HKEY_CURRENT_USER, 'Software\ScreenCropper', 0, KEY_READ or KEY_WRITE, hFirstTimeRunKey);
+      RegSetValueEx(hFirstTimeRunKey, 'ActivationCombination', 0, REG_SZ, LPBYTE(currCombinationVkCodeString), (Length(currCombinationVkCodeString)+1)*2);
 
       result := CallNextHookEx(0, nCode, wParam, lParam);
       exit;
@@ -398,15 +501,15 @@ var
 
   hFirstTimeRunKey: HKEY;
   hCreatedFirstTimeRunKey: HKEY;
+
+  hLastCombinationKey: HKEY;
+  lastCombinationType: DWORD;
+  lastCombinationValue: array of BYTE;
+  lastCombinationValueSize: DWORD;
+
+  i: longInt;
+  vkCombinationString: string;
 begin
-  SetLength(hotkeyCombination, 3);
-
-  hotkeyCombination[0] := VK_CONTROL;
-  hotkeyCombination[1] := VK_MENU;
-  hotkeyCombination[2] := VK_C;
-
-  currCombinationString := 'CTRL-ALT-C';
-
   changingCombination := false;
 
   drawReg := CreateRectRgn(0,0,0,0);
@@ -427,6 +530,14 @@ begin
   begin
     // running for the first time!
 
+    SetLength(hotkeyCombination, 3);
+
+    hotkeyCombination[0] := VK_CONTROL;
+    hotkeyCombination[1] := VK_MENU;
+    hotkeyCombination[2] := VK_C;
+
+    currCombinationString := 'CTRL-ALT-C';
+
     // let's see if we already have a screated registry file for stratup
     if (RegOpenKeyEx(HKEY_CURRENT_USER, 'Software\Microsoft\Windows\CurrentVersion\Run', 0, KEY_READ, hOldStartupKey) = ERROR_SUCCESS) then
     begin
@@ -441,7 +552,7 @@ begin
           // add key to autorun reg
           if (RegCreateKey(HKEY_CURRENT_USER, 'Software\Microsoft\Windows\CurrentVersion\Run', hStartupKey) <> ERROR_SUCCESS) then
           begin
-            // could not create reg key..
+            // could not create reg key..             exePath
             MessageBox(0, 'Could not create registry key for Screen Cropper!', 'Screen Cropper', MB_OK or MB_ICONINFORMATION)
           end
           else
@@ -453,7 +564,36 @@ begin
       end;
     end;
 
+    // put the vk codes of our combination in the value
+    for i:=0 to Length(hotKeyCombination)-1 do
+    begin
+      if (vkCombinationString = '') then
+      begin
+        vkCombinationString := vkCombinationString + IntToStr(hotkeyCombination[i]);
+      end
+      else
+      begin
+        vkCombinationString := vkCombinationString + ', ' + IntToStr(hotkeyCombination[i]);
+      end;
+    end;
     RegCreateKey(HKEY_CURRENT_USER, 'Software\ScreenCropper', hFirstTimeRunKey);
+    RegSetValueEx(hFirstTimeRunKey, 'ActivationCombination', 0, REG_SZ, LPBYTE(vkCombinationString), (Length(vkCombinationString)+1)*2);
+  end
+  else
+  begin
+    // running NOT for the first time.. read the last saved combination then
+    RegOpenKeyEx(HKEY_CURRENT_USER, 'Software\ScreenCropper', 0, KEY_READ, hLastCombinationKey);
+
+    SetLength(lastCombinationValue, 4000); // XDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD
+    RegQueryValueEx(hLastCombinationKey, 'ActivationCombination', nil, @lastCombinationType, @lastCombinationValue[0], @lastCombinationValueSize);
+    SetLength(lastCombinationValue, lastCombinationValueSize);
+
+    for i:=0 to lastCombinationValueSize-1 do
+    begin
+      vkCombinationString := vkCombinationString + char(lastCombinationValue[i]);
+    end;
+
+    loadCombinationFromString(vkCombinationString);
   end;
 
 
@@ -553,6 +693,10 @@ begin
   begin
     exit('SHIFT');
   end
+  else if (vKeyCode = VK_SHIFT) then
+  begin
+    exit('SHIFT');
+  end
   else if (vKeyCode = VK_LCONTROL) then
   begin
     exit('CTRL');
@@ -561,19 +705,27 @@ begin
   begin
     exit('CTRL');
   end
+  else if (vKeyCode = VK_CONTROL) then
+  begin
+    exit('CTRL');
+  end
   else if (vKeyCode = VK_LWIN) then
   begin
-    exit('WIN');
+    exit('LWIN');
   end
   else if (vKeyCode = VK_RWIN) then
   begin
-    exit('WIN');
+    exit('RWIN');
   end
   else if (vKeyCode = VK_LMENU) then
   begin
     exit('ALT');
   end
   else if (vKeyCode = VK_RMENU) then
+  begin
+    exit('ALT');
+  end
+  else if (vKeyCode = VK_MENU) then
   begin
     exit('ALT');
   end
